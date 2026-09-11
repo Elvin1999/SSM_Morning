@@ -1,8 +1,12 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SMM.Application.Auth.DTOs;
 using SMM.Application.Auth.Interfaces;
 using SMM.Domain.Entities;
+using SMM.Infrastructure.Persistence;
+using SSM.API.Helpers;
+using SSM.Application.Auth.DTOs;
 
 namespace SMM.Api.Controllers;
 
@@ -12,13 +16,83 @@ public class AuthController : ControllerBase
 {
     private readonly UserManager<AppUser> _userManager;
     private readonly ITokenService _tokenService;
+    private readonly IAuthHelper _authHelper;
+    private readonly AppDbContext _appDbContext;
 
     public AuthController(
         UserManager<AppUser> userManager,
-        ITokenService tokenService)
+        ITokenService tokenService,
+        IAuthHelper authHelper,
+        AppDbContext appDbContext)
     {
         _userManager = userManager;
         _tokenService = tokenService;
+        _authHelper = authHelper;
+        _appDbContext = appDbContext;
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout(
+    RefreshTokenRequest request)
+    {
+        var storedToken = await _appDbContext.RefreshTokens
+            .FirstOrDefaultAsync(x =>
+                x.Token == request.RefreshToken
+            );
+
+        if (storedToken is not null)
+        {
+            storedToken.IsRevoked = true;
+            storedToken.RevokedAt = DateTime.UtcNow;
+
+            await _appDbContext.SaveChangesAsync();
+        }
+
+        return NoContent();
+    }
+
+    [HttpPost("refresh")]
+    public async Task<ActionResult<AuthResponse>> Refresh(
+    RefreshTokenRequest request)
+    {
+        var storedToken = await _appDbContext.RefreshTokens
+            .Include(x => x.User)
+            .FirstOrDefaultAsync(x =>
+                x.Token == request.RefreshToken
+            );
+
+        if (storedToken is null)
+        {
+            return Unauthorized(new
+            {
+                message = "Invalid refresh token."
+            });
+        }
+
+        if (storedToken.IsRevoked)
+        {
+            return Unauthorized(new
+            {
+                message = "Refresh token has been revoked."
+            });
+        }
+
+        if (storedToken.ExpiresAt <= DateTime.UtcNow)
+        {
+            return Unauthorized(new
+            {
+                message = "Refresh token has expired."
+            });
+        }
+
+        storedToken.IsRevoked = true;
+        storedToken.RevokedAt = DateTime.UtcNow;
+
+        await _appDbContext.SaveChangesAsync();
+
+        return Ok(
+            await _authHelper.CreateAuthResponseAsync(storedToken.User)
+        );
     }
 
     [HttpPost("register")]
@@ -71,18 +145,11 @@ public class AuthController : ControllerBase
         }
 
         var tokenResult =
-            await _tokenService.CreateTokenAsync(user);
+            await _tokenService.CreateAccessTokenAsync(user);
 
-        return Ok(new AuthResponse
-        {
-            UserId = user.Id,
-            UserName = user.UserName!,
-            Email = user.Email!,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            AccessToken = tokenResult.Token,
-            ExpiresAt = tokenResult.ExpiresAt
-        });
+        return Ok(
+            await _authHelper.CreateAuthResponseAsync(user)
+            );
     }
 
     [HttpPost("login")]
@@ -115,17 +182,10 @@ public class AuthController : ControllerBase
         }
 
         var tokenResult =
-            await _tokenService.CreateTokenAsync(user);
+            await _tokenService.CreateAccessTokenAsync(user);
 
-        return Ok(new AuthResponse
-        {
-            UserId = user.Id,
-            UserName = user.UserName!,
-            Email = user.Email!,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            AccessToken = tokenResult.Token,
-            ExpiresAt = tokenResult.ExpiresAt
-        });
+        return Ok(
+            await _authHelper.CreateAuthResponseAsync(user)
+            );
     }
 }

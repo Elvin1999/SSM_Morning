@@ -6,6 +6,7 @@ using SMM.Application.Auth.Interfaces;
 using SMM.Domain.Entities;
 using SMM.Infrastructure.Authentication;
 using SMM.Infrastructure.Persistence;
+using SSM.API.Helpers;
 using System;
 using System.Text;
 
@@ -33,6 +34,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IAuthHelper,AuthHelper>();
 
 // =========================
 // Identity
