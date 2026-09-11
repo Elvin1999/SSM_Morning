@@ -25,4 +25,8 @@
     <ProjectReference Include="..\SSM.Domain\SSM.Domain.csproj" />
   </ItemGroup>
 
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
 </Project>

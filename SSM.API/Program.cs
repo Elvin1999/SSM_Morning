@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SMM.Application.Auth.Interfaces;
+using SMM.Application.Files.Interfaces;
 using SMM.Domain.Entities;
 using SMM.Infrastructure.Authentication;
+using SMM.Infrastructure.Files;
 using SMM.Infrastructure.Persistence;
 using SSM.API.Helpers;
 using System;
@@ -35,6 +37,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthHelper,AuthHelper>();
+builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
 // =========================
 // Identity
@@ -150,6 +153,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseStaticFiles();
 
 app.UseCors("ReactClient");
 
