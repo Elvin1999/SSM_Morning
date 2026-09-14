@@ -1,8 +1,15 @@
 import axios from 'axios';
-import { useAuthStore } from '../features/auth/store/authStore';
+
+import {
+  API_URL,
+} from '../config';
+
+import {
+  useAuthStore,
+} from '../features/auth/store/authStore';
 
 const api = axios.create({
-  baseURL: 'https://localhost:7177/api',
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
