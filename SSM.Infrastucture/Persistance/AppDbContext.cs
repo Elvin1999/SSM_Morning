@@ -19,6 +19,15 @@ public class AppDbContext
     {
     }
 
+    public DbSet<FriendRequest> FriendRequests
+    => Set<FriendRequest>();
+
+    public DbSet<Friendship> Friendships
+        => Set<Friendship>();
+
+    public DbSet<Notification> Notifications
+        => Set<Notification>();
+
     public DbSet<Post> Posts => Set<Post>();
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<PostLike> PostLikes => Set<PostLike>();
