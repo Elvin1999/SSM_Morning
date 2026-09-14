@@ -5,112 +5,89 @@ import {
   IconButton,
   Paper,
   Typography,
-} from '@mui/material';
+} from "@mui/material";
 
-import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
-import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
-import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
-import ChatBubbleOutlineRoundedIcon from '@mui/icons-material/ChatBubbleOutlineRounded';
-import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
-import PublicRoundedIcon from '@mui/icons-material/PublicRounded';
+import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
+import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded";
+import FavoriteBorderRoundedIcon from "@mui/icons-material/FavoriteBorderRounded";
+import ChatBubbleOutlineRoundedIcon from "@mui/icons-material/ChatBubbleOutlineRounded";
+import ShareOutlinedIcon from "@mui/icons-material/ShareOutlined";
+import PublicRoundedIcon from "@mui/icons-material/PublicRounded";
 
-import {
-  useMutation,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import {
-  likePost,
-  unlikePost,
-} from '../api/postsApi';
+import { likePost, unlikePost } from "../api/postsApi";
 
-import { API_ORIGIN } from '../../../config';
+import { API_ORIGIN } from "../../../config";
+
+import { useState } from "react";
+import CommentSection from "../../comments/components/CommentSection";
 
 export default function PostCard({ post }) {
+  const [showComments, setShowComments] = useState(false);
   const queryClient = useQueryClient();
 
-  const imageUrl = post.imageUrl
-    ? `${API_ORIGIN}${post.imageUrl}`
-    : null;
+  const imageUrl = post.imageUrl ? `${API_ORIGIN}${post.imageUrl}` : null;
 
-  const videoUrl = post.videoUrl
-    ? `${API_ORIGIN}${post.videoUrl}`
-    : null;
+  const videoUrl = post.videoUrl ? `${API_ORIGIN}${post.videoUrl}` : null;
 
   const profileImageUrl = post.profileImageUrl
-    ? post.profileImageUrl.startsWith('http')
+    ? post.profileImageUrl.startsWith("http")
       ? post.profileImageUrl
       : `${API_ORIGIN}${post.profileImageUrl}`
     : null;
 
   const likeMutation = useMutation({
     mutationFn: () =>
-      post.isLikedByCurrentUser
-        ? unlikePost(post.id)
-        : likePost(post.id),
+      post.isLikedByCurrentUser ? unlikePost(post.id) : likePost(post.id),
 
     onMutate: async () => {
       await queryClient.cancelQueries({
-        queryKey: ['posts'],
+        queryKey: ["posts"],
       });
 
-      const previousData =
-        queryClient.getQueryData(['posts']);
+      const previousData = queryClient.getQueryData(["posts"]);
 
-      queryClient.setQueryData(
-        ['posts'],
-        (oldData) => {
-          if (!oldData) {
-            return oldData;
-          }
-
-          return {
-            ...oldData,
-
-            items: oldData.items.map((item) => {
-              if (item.id !== post.id) {
-                return item;
-              }
-
-              const currentlyLiked =
-                item.isLikedByCurrentUser;
-
-              return {
-                ...item,
-
-                isLikedByCurrentUser:
-                  !currentlyLiked,
-
-                likeCount:
-                  item.likeCount +
-                  (currentlyLiked ? -1 : 1),
-              };
-            }),
-          };
+      queryClient.setQueryData(["posts"], (oldData) => {
+        if (!oldData) {
+          return oldData;
         }
-      );
+
+        return {
+          ...oldData,
+
+          items: oldData.items.map((item) => {
+            if (item.id !== post.id) {
+              return item;
+            }
+
+            const currentlyLiked = item.isLikedByCurrentUser;
+
+            return {
+              ...item,
+
+              isLikedByCurrentUser: !currentlyLiked,
+
+              likeCount: item.likeCount + (currentlyLiked ? -1 : 1),
+            };
+          }),
+        };
+      });
 
       return {
         previousData,
       };
     },
 
-    onError: (
-      _error,
-      _variables,
-      context
-    ) => {
+    onError: (_error, _variables, context) => {
       if (context?.previousData) {
-        queryClient.setQueryData(
-          ['posts'],
-          context.previousData
-        );
+        queryClient.setQueryData(["posts"], context.previousData);
       }
     },
 
     onSettled: () => {
       queryClient.invalidateQueries({
-        queryKey: ['posts'],
+        queryKey: ["posts"],
       });
     },
   });
@@ -125,35 +102,25 @@ export default function PostCard({ post }) {
 
   function formatPostDate(date) {
     if (!date) {
-      return '';
+      return "";
     }
 
     const postDate = new Date(date);
 
     const now = new Date();
 
-    const difference =
-      now.getTime() -
-      postDate.getTime();
+    const difference = now.getTime() - postDate.getTime();
 
-    const seconds = Math.floor(
-      difference / 1000
-    );
+    const seconds = Math.floor(difference / 1000);
 
-    const minutes = Math.floor(
-      seconds / 60
-    );
+    const minutes = Math.floor(seconds / 60);
 
-    const hours = Math.floor(
-      minutes / 60
-    );
+    const hours = Math.floor(minutes / 60);
 
-    const days = Math.floor(
-      hours / 24
-    );
+    const days = Math.floor(hours / 24);
 
     if (seconds < 60) {
-      return 'Just now';
+      return "Just now";
     }
 
     if (minutes < 60) {
@@ -175,27 +142,22 @@ export default function PostCard({ post }) {
     <Paper
       elevation={0}
       sx={{
-        overflow: 'hidden',
+        overflow: "hidden",
 
         borderRadius: 4,
 
-        border: '1px solid',
+        border: "1px solid",
 
-        borderColor:
-          'rgba(148,163,184,.18)',
+        borderColor: "rgba(148,163,184,.18)",
 
-        background:
-          'rgba(255,255,255,.96)',
+        background: "rgba(255,255,255,.96)",
 
-        boxShadow:
-          '0 16px 45px rgba(15,23,42,.065)',
+        boxShadow: "0 16px 45px rgba(15,23,42,.065)",
 
-        transition:
-          'transform .2s ease, box-shadow .2s ease',
+        transition: "transform .2s ease, box-shadow .2s ease",
 
-        '&:hover': {
-          boxShadow:
-            '0 20px 55px rgba(15,23,42,.09)',
+        "&:hover": {
+          boxShadow: "0 20px 55px rgba(15,23,42,.09)",
         },
       }}
     >
@@ -212,15 +174,12 @@ export default function PostCard({ post }) {
       >
         <Box
           sx={{
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
           }}
         >
           <Avatar
-            src={
-              profileImageUrl ||
-              undefined
-            }
+            src={profileImageUrl || undefined}
             sx={{
               width: 48,
               height: 48,
@@ -229,11 +188,9 @@ export default function PostCard({ post }) {
 
               fontWeight: 800,
 
-              background:
-                'linear-gradient(135deg, #2563eb, #7c3aed)',
+              background: "linear-gradient(135deg, #2563eb, #7c3aed)",
 
-              boxShadow:
-                '0 7px 18px rgba(37,99,235,.18)',
+              boxShadow: "0 7px 18px rgba(37,99,235,.18)",
             }}
           >
             {post.firstName?.[0]}
@@ -252,16 +209,15 @@ export default function PostCard({ post }) {
                 fontSize: 15.5,
               }}
             >
-              {post.firstName}{' '}
-              {post.lastName}
+              {post.firstName} {post.lastName}
             </Typography>
 
             <Box
               sx={{
                 mt: 0.3,
 
-                display: 'flex',
-                alignItems: 'center',
+                display: "flex",
+                alignItems: "center",
                 gap: 0.6,
               }}
             >
@@ -272,23 +228,17 @@ export default function PostCard({ post }) {
                   fontWeight: 500,
                 }}
               >
-                {formatPostDate(
-                  post.createdAt
-                )}
+                {formatPostDate(post.createdAt)}
               </Typography>
 
-              <Typography
-                variant="caption"
-                color="text.secondary"
-              >
+              <Typography variant="caption" color="text.secondary">
                 •
               </Typography>
 
               <PublicRoundedIcon
                 sx={{
                   fontSize: 14,
-                  color:
-                    'text.secondary',
+                  color: "text.secondary",
                 }}
               />
             </Box>
@@ -296,9 +246,8 @@ export default function PostCard({ post }) {
 
           <IconButton
             sx={{
-              '&:hover': {
-                bgcolor:
-                  'rgba(15,23,42,.05)',
+              "&:hover": {
+                bgcolor: "rgba(15,23,42,.05)",
               },
             }}
           >
@@ -315,15 +264,15 @@ export default function PostCard({ post }) {
             sx={{
               mt: 2,
 
-              whiteSpace: 'pre-wrap',
+              whiteSpace: "pre-wrap",
 
-              wordBreak: 'break-word',
+              wordBreak: "break-word",
 
               fontSize: 15.5,
 
               lineHeight: 1.65,
 
-              color: '#172033',
+              color: "#172033",
             }}
           >
             {post.content}
@@ -338,16 +287,15 @@ export default function PostCard({ post }) {
       {imageUrl && (
         <Box
           sx={{
-            width: '100%',
-            bgcolor: '#07090d',
+            width: "100%",
+            bgcolor: "#07090d",
 
-            borderTop: '1px solid',
-            borderBottom: '1px solid',
+            borderTop: "1px solid",
+            borderBottom: "1px solid",
 
-            borderColor:
-              'rgba(148,163,184,.12)',
+            borderColor: "rgba(148,163,184,.12)",
 
-            overflow: 'hidden',
+            overflow: "hidden",
           }}
         >
           <Box
@@ -356,18 +304,18 @@ export default function PostCard({ post }) {
             alt="Post"
             loading="lazy"
             sx={{
-              display: 'block',
+              display: "block",
 
-              width: '100%',
+              width: "100%",
 
               maxHeight: {
                 xs: 500,
                 sm: 650,
               },
 
-              objectFit: 'contain',
+              objectFit: "contain",
 
-              mx: 'auto',
+              mx: "auto",
             }}
           />
         </Box>
@@ -380,17 +328,16 @@ export default function PostCard({ post }) {
       {videoUrl && (
         <Box
           sx={{
-            width: '100%',
+            width: "100%",
 
-            bgcolor: '#05070a',
+            bgcolor: "#05070a",
 
-            borderTop: '1px solid',
-            borderBottom: '1px solid',
+            borderTop: "1px solid",
+            borderBottom: "1px solid",
 
-            borderColor:
-              'rgba(148,163,184,.12)',
+            borderColor: "rgba(148,163,184,.12)",
 
-            overflow: 'hidden',
+            overflow: "hidden",
           }}
         >
           <Box
@@ -400,16 +347,16 @@ export default function PostCard({ post }) {
             preload="metadata"
             playsInline
             sx={{
-              display: 'block',
+              display: "block",
 
-              width: '100%',
+              width: "100%",
 
               maxHeight: {
                 xs: 500,
                 sm: 650,
               },
 
-              bgcolor: '#000',
+              bgcolor: "#000",
             }}
           />
         </Box>
@@ -429,19 +376,18 @@ export default function PostCard({ post }) {
           sx={{
             minHeight: 30,
 
-            display: 'flex',
+            display: "flex",
 
-            alignItems: 'center',
+            alignItems: "center",
 
-            justifyContent:
-              'space-between',
+            justifyContent: "space-between",
           }}
         >
           <Box
             sx={{
-              display: 'flex',
+              display: "flex",
 
-              alignItems: 'center',
+              alignItems: "center",
 
               gap: 0.7,
             }}
@@ -453,22 +399,20 @@ export default function PostCard({ post }) {
                     width: 21,
                     height: 21,
 
-                    display: 'grid',
+                    display: "grid",
 
-                    placeItems: 'center',
+                    placeItems: "center",
 
-                    borderRadius: '50%',
+                    borderRadius: "50%",
 
-                    background:
-                      'linear-gradient(135deg, #2563eb, #6366f1)',
+                    background: "linear-gradient(135deg, #2563eb, #6366f1)",
 
-                    boxShadow:
-                      '0 3px 8px rgba(37,99,235,.25)',
+                    boxShadow: "0 3px 8px rgba(37,99,235,.25)",
                   }}
                 >
                   <FavoriteRoundedIcon
                     sx={{
-                      color: 'white',
+                      color: "white",
                       fontSize: 12,
                     }}
                   />
@@ -489,7 +433,7 @@ export default function PostCard({ post }) {
 
           <Box
             sx={{
-              display: 'flex',
+              display: "flex",
               gap: 1.5,
             }}
           >
@@ -500,18 +444,15 @@ export default function PostCard({ post }) {
                 sx={{
                   fontSize: 13.5,
 
-                  cursor: 'pointer',
+                  cursor: "pointer",
 
-                  '&:hover': {
-                    textDecoration:
-                      'underline',
+                  "&:hover": {
+                    textDecoration: "underline",
                   },
                 }}
               >
-                {post.commentCount}{' '}
-                {post.commentCount === 1
-                  ? 'comment'
-                  : 'comments'}
+                {post.commentCount}{" "}
+                {post.commentCount === 1 ? "comment" : "comments"}
               </Typography>
             )}
           </Box>
@@ -529,10 +470,9 @@ export default function PostCard({ post }) {
 
         <Box
           sx={{
-            display: 'grid',
+            display: "grid",
 
-            gridTemplateColumns:
-              'repeat(3, 1fr)',
+            gridTemplateColumns: "repeat(3, 1fr)",
 
             py: 0.6,
 
@@ -544,44 +484,34 @@ export default function PostCard({ post }) {
           <Box
             onClick={handleLike}
             sx={{
-              cursor:
-                likeMutation.isPending
-                  ? 'default'
-                  : 'pointer',
+              cursor: likeMutation.isPending ? "default" : "pointer",
 
-              userSelect: 'none',
+              userSelect: "none",
 
               minHeight: 43,
 
-              display: 'flex',
+              display: "flex",
 
-              justifyContent:
-                'center',
+              justifyContent: "center",
 
-              alignItems: 'center',
+              alignItems: "center",
 
               gap: 0.8,
 
               borderRadius: 2.5,
 
-              transition:
-                'all .18s ease',
+              transition: "all .18s ease",
 
-              color:
-                post.isLikedByCurrentUser
-                  ? '#e11d48'
-                  : 'text.secondary',
+              color: post.isLikedByCurrentUser ? "#e11d48" : "text.secondary",
 
-              '&:hover': {
-                bgcolor:
-                  post.isLikedByCurrentUser
-                    ? 'rgba(225,29,72,.07)'
-                    : 'rgba(15,23,42,.045)',
+              "&:hover": {
+                bgcolor: post.isLikedByCurrentUser
+                  ? "rgba(225,29,72,.07)"
+                  : "rgba(15,23,42,.045)",
               },
 
-              '&:active': {
-                transform:
-                  'scale(.97)',
+              "&:active": {
+                transform: "scale(.97)",
               },
             }}
           >
@@ -604,7 +534,7 @@ export default function PostCard({ post }) {
               sx={{
                 fontWeight: 700,
 
-                color: 'inherit',
+                color: "inherit",
               }}
             >
               Like
@@ -615,38 +545,36 @@ export default function PostCard({ post }) {
 
           <Box
             sx={{
-              cursor: 'pointer',
+              cursor: "pointer",
 
-              userSelect: 'none',
+              userSelect: "none",
 
               minHeight: 43,
 
-              display: 'flex',
+              display: "flex",
 
-              justifyContent:
-                'center',
+              justifyContent: "center",
 
-              alignItems: 'center',
+              alignItems: "center",
 
               gap: 0.8,
 
               borderRadius: 2.5,
 
-              color:
-                'text.secondary',
+              color: "text.secondary",
 
-              transition:
-                'all .18s ease',
+              transition: "all .18s ease",
 
-              '&:hover': {
-                bgcolor:
-                  'rgba(15,23,42,.045)',
+              "&:hover": {
+                bgcolor: "rgba(15,23,42,.045)",
               },
 
-              '&:active': {
-                transform:
-                  'scale(.97)',
+              "&:active": {
+                transform: "scale(.97)",
               },
+            }}
+            onClick={() => {
+              setShowComments((value) => !value);
             }}
           >
             <ChatBubbleOutlineRoundedIcon
@@ -669,37 +597,32 @@ export default function PostCard({ post }) {
 
           <Box
             sx={{
-              cursor: 'pointer',
+              cursor: "pointer",
 
-              userSelect: 'none',
+              userSelect: "none",
 
               minHeight: 43,
 
-              display: 'flex',
+              display: "flex",
 
-              justifyContent:
-                'center',
+              justifyContent: "center",
 
-              alignItems: 'center',
+              alignItems: "center",
 
               gap: 0.8,
 
               borderRadius: 2.5,
 
-              color:
-                'text.secondary',
+              color: "text.secondary",
 
-              transition:
-                'all .18s ease',
+              transition: "all .18s ease",
 
-              '&:hover': {
-                bgcolor:
-                  'rgba(15,23,42,.045)',
+              "&:hover": {
+                bgcolor: "rgba(15,23,42,.045)",
               },
 
-              '&:active': {
-                transform:
-                  'scale(.97)',
+              "&:active": {
+                transform: "scale(.97)",
               },
             }}
           >
@@ -720,6 +643,13 @@ export default function PostCard({ post }) {
           </Box>
         </Box>
       </Box>
+
+      {showComments && (
+        <>
+          <Divider />
+          <CommentSection postId={post.id} />
+        </>
+      )}
     </Paper>
   );
 }
